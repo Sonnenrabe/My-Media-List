@@ -188,12 +188,10 @@ object DataExportImportManager {
     fun parseHexColor(hexStr: String, default: Long): Long {
         val clean = hexStr.trim().removePrefix("#")
         return try {
-            if (clean.length == 6) {
-                ("FF$clean").toLong(16)
-            } else if (clean.length == 8) {
-                clean.toLong(16)
-            } else {
-                clean.toLongOrNull() ?: default
+            when (clean.length) {
+                6 -> ("FF$clean").toLong(16)
+                8 -> clean.toLong(16)
+                else -> default
             }
         } catch (_: Exception) {
             default

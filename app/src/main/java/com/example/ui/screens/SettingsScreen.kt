@@ -131,6 +131,9 @@ fun SettingsScreen(
     var editingMediaRange by remember { mutableStateOf<Pair<Int, MediaRatingRange>?>(null) }
     var isAddingMediaRange by remember { mutableStateOf(false) }
 
+    var pendingDeleteRatingWord by remember { mutableStateOf<Pair<Int, GameRatingColor>?>(null) }
+    var pendingDeleteMediaRange by remember { mutableStateOf<Pair<Int, MediaRatingRange>?>(null) }
+
     var showResetConfirmDialog by remember { mutableStateOf(false) }
 
     val tabTitles = listOf(
@@ -499,9 +502,7 @@ fun SettingsScreen(
                                             Icon(Icons.Default.Edit, contentDescription = strings.edit, tint = TextSecondary, modifier = Modifier.size(18.dp))
                                         }
                                         IconButton(onClick = {
-                                            val updated = gameRatingColors.toMutableList().apply { removeAt(index) }
-                                            viewModel.updateGameRatingColors(updated)
-                                            Toast.makeText(context, strings.ratingWordRemovedToast(item.ratingWord), Toast.LENGTH_SHORT).show()
+                                            pendingDeleteRatingWord = index to item
                                         }) {
                                             Icon(Icons.Default.Delete, contentDescription = strings.delete, tint = NeonRed, modifier = Modifier.size(18.dp))
                                         }
@@ -624,10 +625,7 @@ fun SettingsScreen(
                                             Icon(Icons.Default.Edit, contentDescription = strings.edit, tint = TextSecondary, modifier = Modifier.size(18.dp))
                                         }
                                         IconButton(onClick = {
-                                            val updated = mediaRatingRanges.toMutableList()
-                                            updated.removeAt(index)
-                                            viewModel.updateMediaRatingRanges(updated)
-                                            Toast.makeText(context, strings.rangeRemovedToast, Toast.LENGTH_SHORT).show()
+                                            pendingDeleteMediaRange = index to item
                                         }) {
                                             Icon(Icons.Default.Delete, contentDescription = strings.delete, tint = NeonRed, modifier = Modifier.size(18.dp))
                                         }
@@ -861,6 +859,104 @@ fun SettingsScreen(
                 isAddingMediaRange = false
                 editingMediaRange = null
             }
+        )
+    }
+
+    // DIALOG: CONFIRM DELETE GLOBAL RATING WORD
+    pendingDeleteRatingWord?.let { (deleteIdx, item) ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteRatingWord = null },
+            title = {
+                Text(
+                    text = strings.confirmDeleteTitle(item.ratingWord),
+                    fontFamily = RajdhaniFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = NeonRed
+                )
+            },
+            text = {
+                Text(
+                    text = strings.confirmDeleteMessage(item.ratingWord),
+                    color = TextPrimary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val updated = gameRatingColors.toMutableList()
+                        if (deleteIdx in updated.indices) {
+                            updated.removeAt(deleteIdx)
+                            viewModel.updateGameRatingColors(updated)
+                            Toast.makeText(context, strings.ratingWordRemovedToast(item.ratingWord), Toast.LENGTH_SHORT).show()
+                        }
+                        pendingDeleteRatingWord = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonRed, contentColor = Color.White),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(strings.deletePermanently, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { pendingDeleteRatingWord = null },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(strings.cancel, color = TextSecondary)
+                }
+            },
+            containerColor = GameDarkSurface
+        )
+    }
+
+    // DIALOG: CONFIRM DELETE STAR RATING RANGE
+    pendingDeleteMediaRange?.let { (deleteIdx, item) ->
+        val rangeTitle = "${String.format(java.util.Locale.US, "%.1f", item.minScore)} - ${String.format(java.util.Locale.US, "%.1f", item.maxScore)}" +
+            if (item.label.isNotBlank()) " (${item.label})" else ""
+        AlertDialog(
+            onDismissRequest = { pendingDeleteMediaRange = null },
+            title = {
+                Text(
+                    text = strings.confirmDeleteTitle(rangeTitle),
+                    fontFamily = RajdhaniFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = NeonRed
+                )
+            },
+            text = {
+                Text(
+                    text = strings.confirmDeleteMessage(rangeTitle),
+                    color = TextPrimary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val updated = mediaRatingRanges.toMutableList()
+                        if (deleteIdx in updated.indices) {
+                            updated.removeAt(deleteIdx)
+                            viewModel.updateMediaRatingRanges(updated)
+                            Toast.makeText(context, strings.rangeRemovedToast, Toast.LENGTH_SHORT).show()
+                        }
+                        pendingDeleteMediaRange = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonRed, contentColor = Color.White),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(strings.deletePermanently, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { pendingDeleteMediaRange = null },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(strings.cancel, color = TextSecondary)
+                }
+            },
+            containerColor = GameDarkSurface
         )
     }
 
@@ -1244,6 +1340,7 @@ fun GameRatingColorDialog(
     val strings = LocalAppStrings.current
     var word by remember { mutableStateOf(initialWord) }
     var selectedHex by remember { mutableLongStateOf(initialColorHex) }
+    var hexInputText by remember { mutableStateOf(DataExportImportManager.formatHexColor(initialColorHex)) }
     var isWordError by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -1276,6 +1373,26 @@ fun GameRatingColorDialog(
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
+
+                // Live Color Preview
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(selectedHex),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = DataExportImportManager.formatHexColor(selectedHex),
+                            fontWeight = FontWeight.Bold,
+                            color = if (Color(selectedHex).red * 0.299 + Color(selectedHex).green * 0.587 + Color(selectedHex).blue * 0.114 > 0.5) Color.Black else Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(strings.chooseColorLabel, style = MaterialTheme.typography.labelSmall, color = TextTertiary, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -1297,7 +1414,10 @@ fun GameRatingColorDialog(
                                         color = if (isChosen) Color.White else Color.White.copy(alpha = 0.2f),
                                         shape = CircleShape
                                     )
-                                    .clickable { selectedHex = col },
+                                    .clickable {
+                                        selectedHex = col
+                                        hexInputText = DataExportImportManager.formatHexColor(col)
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isChosen) {
@@ -1308,6 +1428,27 @@ fun GameRatingColorDialog(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(strings.customHexCode, style = MaterialTheme.typography.labelSmall, color = TextTertiary, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                OutlinedTextField(
+                    value = hexInputText,
+                    onValueChange = { input ->
+                        hexInputText = input
+                        selectedHex = DataExportImportManager.parseHexColor(input, selectedHex)
+                    },
+                    placeholder = { Text("#RRGGBB") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(selectedHex),
+                        unfocusedBorderColor = TextTertiary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("rating_word_hex_input")
+                )
             }
         },
         confirmButton = {
@@ -1348,6 +1489,7 @@ fun MediaRangeColorDialog(
     var maxText by remember { mutableStateOf(String.format(java.util.Locale.US, "%.1f", initialMax)) }
     var label by remember { mutableStateOf(initialLabel) }
     var selectedHex by remember { mutableLongStateOf(initialColorHex) }
+    var hexInputText by remember { mutableStateOf(DataExportImportManager.formatHexColor(initialColorHex)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1397,6 +1539,26 @@ fun MediaRangeColorDialog(
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
+
+                // Live Color Preview
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(selectedHex),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = DataExportImportManager.formatHexColor(selectedHex),
+                            fontWeight = FontWeight.Bold,
+                            color = if (Color(selectedHex).red * 0.299 + Color(selectedHex).green * 0.587 + Color(selectedHex).blue * 0.114 > 0.5) Color.Black else Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(strings.chooseColorLabel, style = MaterialTheme.typography.labelSmall, color = TextTertiary, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -1418,7 +1580,10 @@ fun MediaRangeColorDialog(
                                         color = if (isChosen) Color.White else Color.White.copy(alpha = 0.2f),
                                         shape = CircleShape
                                     )
-                                    .clickable { selectedHex = col },
+                                    .clickable {
+                                        selectedHex = col
+                                        hexInputText = DataExportImportManager.formatHexColor(col)
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isChosen) {
@@ -1429,6 +1594,27 @@ fun MediaRangeColorDialog(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(strings.customHexCode, style = MaterialTheme.typography.labelSmall, color = TextTertiary, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                OutlinedTextField(
+                    value = hexInputText,
+                    onValueChange = { input ->
+                        hexInputText = input
+                        selectedHex = DataExportImportManager.parseHexColor(input, selectedHex)
+                    },
+                    placeholder = { Text("#RRGGBB") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(selectedHex),
+                        unfocusedBorderColor = TextTertiary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("star_range_hex_input")
+                )
             }
         },
         confirmButton = {

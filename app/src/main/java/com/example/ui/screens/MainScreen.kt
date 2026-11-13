@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -165,20 +167,29 @@ fun MainScreen(
             drawerContent = {
                 ModalDrawerSheet(
                     drawerContainerColor = GameDarkSurface,
+                    drawerShape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 0.dp),
+                    windowInsets = WindowInsets(0, 0, 0, 0),
                     modifier = Modifier
                         .width(310.dp)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxHeight()
                 ) {
-                    // Drawer Header
-                    Surface(
-                        color = GameDarkSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .navigationBarsPadding()
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 24.dp)
+                        // Drawer Header
+                        Surface(
+                            color = GameDarkSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .statusBarsPadding()
+                                    .padding(horizontal = 20.dp, vertical = 24.dp)
+                            ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.SportsEsports,
@@ -458,6 +469,9 @@ fun MainScreen(
                         ),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
             }
         ) {
