@@ -279,29 +279,14 @@ fun EditGameDialog(
 
                 if (showNotesField) {
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text(
-                        text = strings.notesOptional,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextTertiary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
+                    ExpandableNotesField(
                         value = notes,
                         onValueChange = { notes = it },
-                        placeholder = { Text(strings.gameNotesPlaceholder) },
-                        singleLine = false,
-                        maxLines = 4,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("edit_game_notes_input"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = NeonCyan,
-                            unfocusedBorderColor = TextTertiary,
-                            focusedContainerColor = GameDarkSurfaceVariant,
-                            unfocusedContainerColor = GameDarkSurfaceVariant
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                        label = strings.notesOptional,
+                        placeholder = strings.gameNotesPlaceholder,
+                        accentColor = NeonCyan,
+                        fieldModifier = Modifier.testTag("edit_game_notes_input"),
+                        dialogTitle = "${strings.notesOptional} • ${title.ifBlank { game.title }}"
                     )
                 }
 

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
@@ -41,6 +44,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -350,7 +356,8 @@ fun GameDetailDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Freeform Notes Section
+                // Freeform Notes Section (expandable & scrollable inline + tap to edit)
+                var isNotesExpanded by remember(game.id) { mutableStateOf(false) }
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = GameDarkSurfaceVariant.copy(alpha = 0.6f),
@@ -360,38 +367,87 @@ fun GameDetailDialog(
                         .clickable { onOpenEditNotes() }
                         .testTag("detail_notes_section")
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
                         Row(
-                            modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Description,
-                                contentDescription = null,
-                                tint = if (game.notes.isNotBlank()) NeonCyan else TextTertiary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = if (game.notes.isNotBlank()) game.notes else strings.tapToAddNotes,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (game.notes.isNotBlank()) TextPrimary else TextTertiary,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = if (game.notes.isNotBlank()) NeonCyan else TextTertiary,
+                                    modifier = Modifier
+                                        .padding(top = 2.dp)
+                                        .size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                if (game.notes.isBlank()) {
+                                    Text(
+                                        text = strings.tapToAddNotes,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextTertiary,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                } else if (isNotesExpanded) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 260.dp)
+                                            .verticalScroll(rememberScrollState())
+                                    ) {
+                                        Text(
+                                            text = game.notes,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = game.notes,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        maxLines = 4,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (game.notes.isNotBlank()) {
+                                    IconButton(
+                                        onClick = { isNotesExpanded = !isNotesExpanded },
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .testTag("detail_notes_expand_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isNotesExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                            contentDescription = if (isNotesExpanded) strings.collapseNotesDesc else strings.expandNotesDesc,
+                                            tint = NeonCyan,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = strings.edit,
+                                    tint = TextTertiary,
+                                    modifier = Modifier
+                                        .padding(start = 4.dp)
+                                        .size(16.dp)
+                                )
+                            }
                         }
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = strings.edit,
-                            tint = TextTertiary,
-                            modifier = Modifier.size(16.dp)
-                        )
                     }
                 }
 

@@ -123,6 +123,9 @@ internal object JapaneseStrings : AppStrings {
     override val playtimePrefix: (String) -> String = { "プレイ時間: $it" }
     override val notesDialogPlaceholder = "感想、現在のクエスト、進捗など..."
     override val saveNotes = "メモを保存"
+    override val expandNotesDesc = "拡大"
+    override val collapseNotesDesc = "縮小"
+    override val done = "完了"
     override val completedTapDetails = "完了 • タップで詳細"
 
     override val last30DaysPlaytime = "過去30日間のプレイ時間"

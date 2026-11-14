@@ -149,6 +149,9 @@ interface AppStrings {
     val playtimePrefix: (String) -> String
     val notesDialogPlaceholder: String
     val saveNotes: String
+    val expandNotesDesc: String
+    val collapseNotesDesc: String
+    val done: String
     val completedTapDetails: String
 
     // 30-Day Activity Chart

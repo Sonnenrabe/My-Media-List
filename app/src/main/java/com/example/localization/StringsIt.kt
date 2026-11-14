@@ -123,6 +123,9 @@ internal object ItalianStrings : AppStrings {
     override val playtimePrefix: (String) -> String = { "Tempo: $it" }
     override val notesDialogPlaceholder = "Pensieri, obiettivo attuale, stato..."
     override val saveNotes = "Salva note"
+    override val expandNotesDesc = "Espandi"
+    override val collapseNotesDesc = "Comprimi"
+    override val done = "Fatto"
     override val completedTapDetails = "Completato • Tocca per dettagli"
 
     override val last30DaysPlaytime = "ULTIMI 30 GIORNI"

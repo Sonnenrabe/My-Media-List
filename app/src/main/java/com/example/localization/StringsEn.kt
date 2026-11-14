@@ -123,6 +123,9 @@ internal object EnglishStrings : AppStrings {
     override val playtimePrefix: (String) -> String = { "Playtime: $it" }
     override val notesDialogPlaceholder = "Add thoughts, current quest, completion status..."
     override val saveNotes = "Save Notes"
+    override val expandNotesDesc = "Expand"
+    override val collapseNotesDesc = "Collapse"
+    override val done = "Done"
     override val completedTapDetails = "Completed • Tap for details"
 
     override val last30DaysPlaytime = "LAST 30 DAYS PLAYTIME"

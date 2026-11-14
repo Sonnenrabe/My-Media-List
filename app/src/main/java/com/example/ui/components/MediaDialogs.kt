@@ -307,19 +307,14 @@ fun SeriesAnimeEditDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
+                ExpandableNotesField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text(strings.notesOptional) },
-                    placeholder = { Text(strings.seriesNotesPlaceholder) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .testTag("series_notes_input"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = accent,
-                        unfocusedBorderColor = TextTertiary
-                    )
+                    label = strings.notesOptional,
+                    placeholder = strings.seriesNotesPlaceholder,
+                    accentColor = accent,
+                    fieldModifier = Modifier.testTag("series_notes_input"),
+                    dialogTitle = "${strings.notesOptional} • ${name.ifBlank { typeTitle }}"
                 )
 
                 if (isEdit && onDelete != null) {
@@ -519,19 +514,14 @@ fun MangaEditDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
+                ExpandableNotesField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text(strings.notesOptional) },
-                    placeholder = { Text(strings.mangaNotesPlaceholder) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .testTag("manga_notes_input"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = accent,
-                        unfocusedBorderColor = TextTertiary
-                    )
+                    label = strings.notesOptional,
+                    placeholder = strings.mangaNotesPlaceholder,
+                    accentColor = accent,
+                    fieldModifier = Modifier.testTag("manga_notes_input"),
+                    dialogTitle = "${strings.notesOptional} • ${title.ifBlank { strings.typeManga }}"
                 )
 
                 if (isEdit && onDelete != null) {
@@ -697,19 +687,14 @@ fun BookEditDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
+                ExpandableNotesField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text(strings.notesOptional) },
-                    placeholder = { Text(strings.bookNotesPlaceholder) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .testTag("book_notes_input"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = accent,
-                        unfocusedBorderColor = TextTertiary
-                    )
+                    label = strings.notesOptional,
+                    placeholder = strings.bookNotesPlaceholder,
+                    accentColor = accent,
+                    fieldModifier = Modifier.testTag("book_notes_input"),
+                    dialogTitle = "${strings.notesOptional} • ${title.ifBlank { strings.typeBook }}"
                 )
 
                 if (isEdit && onDelete != null) {

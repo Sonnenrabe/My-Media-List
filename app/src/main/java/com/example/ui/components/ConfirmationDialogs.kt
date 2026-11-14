@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -26,12 +28,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.CloseFullscreen
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Schedule
@@ -83,6 +87,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.data.AppColorSettingsManager
 import com.example.data.AutoBackupStatus
 import com.example.data.FullBackupSummary
@@ -364,50 +370,95 @@ fun EditNotesDialog(
 ) {
     val strings = LocalAppStrings.current
     var notesText by remember { mutableStateOf(game.notes) }
+    var isExpanded by remember { mutableStateOf(false) }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Description,
-                    contentDescription = null,
-                    tint = NeonCyan,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = strings.gameNotesTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TextPrimary
-                )
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = GameDarkSurface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, NeonCyan.copy(alpha = 0.3f)),
+            modifier = if (isExpanded) {
+                Modifier
+                    .fillMaxWidth(0.95f)
+                    .fillMaxHeight(0.86f)
+            } else {
+                Modifier
+                    .fillMaxWidth(0.92f)
+                    .heightIn(min = 380.dp, max = 560.dp)
             }
-        },
-        text = {
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .fillMaxSize()
+                    .padding(18.dp)
             ) {
-                Text(
-                    text = game.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color(game.colorHex)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Description,
+                            contentDescription = null,
+                            tint = NeonCyan,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = strings.gameNotesTitle,
+                                fontFamily = RajdhaniFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 21.sp,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = game.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = Color(game.colorHex),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { isExpanded = !isExpanded },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("toggle_expand_notes_dialog_button")
+                    ) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.CloseFullscreen else Icons.Default.OpenInFull,
+                            contentDescription = if (isExpanded) strings.collapseNotesDesc else strings.expandNotesDesc,
+                            tint = NeonCyan
+                        )
+                    }
+                }
+
                 Text(
                     text = strings.playtimePrefix(game.formattedPlaytime()),
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = notesText,
                     onValueChange = { notesText = it },
                     placeholder = { Text(strings.notesDialogPlaceholder) },
+                    singleLine = false,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 120.dp, max = 220.dp)
+                        .weight(1f)
                         .testTag("edit_notes_input"),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = NeonCyan,
@@ -417,24 +468,36 @@ fun EditNotesDialog(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
+                    ) {
+                        Text(strings.cancel, color = TextSecondary)
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Button(
+                        onClick = { onSaveNotes(notesText) },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = Color(0xFF002026)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = 48.dp)
+                            .testTag("save_notes_button")
+                    ) {
+                        Text(strings.saveNotes, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onSaveNotes(notesText) },
-                colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = Color(0xFF002026)),
-                modifier = Modifier.testTag("save_notes_button")
-            ) {
-                Text(strings.saveNotes, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(strings.cancel, color = TextSecondary)
-            }
-        },
-        containerColor = GameDarkSurface
-    )
+        }
+    }
 }
 
 /**
@@ -868,25 +931,14 @@ fun AddGameDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = strings.notesOptional,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextSecondary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                OutlinedTextField(
+                ExpandableNotesField(
                     value = notes,
                     onValueChange = { notes = it },
-                    placeholder = { Text(strings.gameNotesPlaceholder) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 70.dp, max = 120.dp)
-                        .testTag("add_game_notes_input"),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonCyan,
-                        unfocusedBorderColor = TextTertiary
-                    ),
-                    shape = RoundedCornerShape(10.dp)
+                    label = strings.notesOptional,
+                    placeholder = strings.gameNotesPlaceholder,
+                    accentColor = NeonCyan,
+                    fieldModifier = Modifier.testTag("add_game_notes_input"),
+                    dialogTitle = "${strings.notesOptional} • ${title.ifBlank { dialogTitleOverride ?: strings.addGameTitle }}"
                 )
             }
         },

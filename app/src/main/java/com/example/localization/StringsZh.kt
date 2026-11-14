@@ -123,6 +123,9 @@ internal object ChineseStrings : AppStrings {
     override val playtimePrefix: (String) -> String = { "时长: $it" }
     override val notesDialogPlaceholder = "记录想法、当前进度等..."
     override val saveNotes = "保存备注"
+    override val expandNotesDesc = "展开"
+    override val collapseNotesDesc = "收起"
+    override val done = "完成"
     override val completedTapDetails = "已完成 • 点击查看详情"
 
     override val last30DaysPlaytime = "近30天游玩时长"
