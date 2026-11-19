@@ -202,6 +202,10 @@ internal object EnglishStrings : AppStrings {
     override val pickFromEntries = "Pick from your entries:"
     override val subtitleOptional = "Note / Subtitle (optional)"
     override val subtitlePlaceholder = "e.g. Rating or playtime"
+    override val topTenModeEdit = "Edit"
+    override val topTenModeInsertShift = "Insert & Shift ↓"
+    override val topTenShiftHint: (Int, Int) -> String = { from, to -> "Moves #$from → #$to and shifts following entries down." }
+    override val topTenShiftDropWarning = "Rank #10 will drop off the Top 10 list."
 
     override val notificationsDisabledBanner = "Notifications disabled. Tap to enable."
     override val enableNotificationsToast = "Please enable notifications to see the live timer."

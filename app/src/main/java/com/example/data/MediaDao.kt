@@ -164,6 +164,12 @@ interface MediaDao {
     @Query("SELECT DISTINCT categoryName FROM top_ten_entries WHERE mediaType = :mediaType ORDER BY categoryName ASC")
     fun getCategoriesForMediaType(mediaType: String): Flow<List<String>>
 
+    @Query("SELECT * FROM top_ten_entries WHERE mediaType = :mediaType AND categoryName = :categoryName ORDER BY rank ASC, id ASC")
+    suspend fun getTopTenEntriesForCategoryDirect(mediaType: String, categoryName: String): List<TopTenEntry>
+
+    @Query("SELECT * FROM top_ten_entries WHERE id = :id LIMIT 1")
+    suspend fun getTopTenEntryByIdDirect(id: Long): TopTenEntry?
+
     @Query("SELECT * FROM top_ten_entries ORDER BY mediaType ASC, categoryName ASC, rank ASC")
     suspend fun getAllTopTenEntriesDirect(): List<TopTenEntry>
 
@@ -187,6 +193,88 @@ interface MediaDao {
 
     @Query("DELETE FROM top_ten_entries")
     suspend fun clearAllTopTen()
+
+    @Transaction
+    suspend fun saveTopTenEntryAtRank(
+        mediaType: String,
+        categoryName: String,
+        rank: Int,
+        title: String,
+        subtitle: String,
+        shiftExistingDown: Boolean
+    ) {
+        val cleanCategory = categoryName.trim()
+        val cleanTitle = title.trim()
+        val cleanSubtitle = subtitle.trim()
+        if (cleanCategory.isBlank() || cleanTitle.isBlank()) return
+        val clampedRank = rank.coerceIn(1, 10)
+
+        val existingRows = getTopTenEntriesForCategoryDirect(mediaType, cleanCategory)
+        val byRank = linkedMapOf<Int, TopTenEntry>()
+        for (row in existingRows) {
+            if (row.rank in 1..10 && row.title.isNotBlank() && !byRank.containsKey(row.rank)) {
+                byRank[row.rank] = row
+            }
+        }
+
+        val newEntry = TopTenEntry(
+            id = 0,
+            mediaType = mediaType,
+            categoryName = cleanCategory,
+            rank = clampedRank,
+            title = cleanTitle,
+            subtitle = cleanSubtitle
+        )
+
+        if (shiftExistingDown) {
+            var currentRank = clampedRank
+            var toPlace: TopTenEntry? = newEntry
+            while (toPlace != null && currentRank <= 10) {
+                val displaced = byRank[currentRank]
+                byRank[currentRank] = toPlace.copy(id = 0, rank = currentRank)
+                toPlace = displaced
+                currentRank++
+            }
+        } else {
+            byRank[clampedRank] = newEntry
+        }
+
+        clearTopTenForCategory(mediaType, cleanCategory)
+        val normalized = byRank.entries
+            .sortedBy { it.key }
+            .map { (r, item) -> item.copy(id = 0, rank = r) }
+        insertAllTopTen(normalized)
+    }
+
+    @Transaction
+    suspend fun deleteTopTenEntryPreservingCategory(entryId: Long) {
+        val target = getTopTenEntryByIdDirect(entryId) ?: return
+        val existingRows = getTopTenEntriesForCategoryDirect(target.mediaType, target.categoryName)
+        val remainingByRank = linkedMapOf<Int, TopTenEntry>()
+        for (row in existingRows) {
+            if (row.rank != target.rank && row.rank in 1..10 && row.title.isNotBlank() && !remainingByRank.containsKey(row.rank)) {
+                remainingByRank[row.rank] = row
+            }
+        }
+        clearTopTenForCategory(target.mediaType, target.categoryName)
+        if (remainingByRank.isEmpty()) {
+            insertTopTenEntry(
+                TopTenEntry(
+                    mediaType = target.mediaType,
+                    categoryName = target.categoryName,
+                    rank = 1,
+                    title = "",
+                    subtitle = ""
+                )
+            )
+        } else {
+            insertAllTopTen(
+                remainingByRank.entries
+                    .sortedBy { it.key }
+                    .map { (r, item) -> item.copy(id = 0, rank = r) }
+            )
+        }
+    }
 
     // ==========================================
     // 30-Day Rolling Daily Playtime (Media)

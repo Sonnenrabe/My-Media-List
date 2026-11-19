@@ -231,6 +231,10 @@ interface AppStrings {
     val pickFromEntries: String
     val subtitleOptional: String
     val subtitlePlaceholder: String
+    val topTenModeEdit: String
+    val topTenModeInsertShift: String
+    val topTenShiftHint: (Int, Int) -> String
+    val topTenShiftDropWarning: String
 
     // PlayTime Screen
     val notificationsDisabledBanner: String

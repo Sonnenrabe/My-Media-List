@@ -443,16 +443,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getTopTenCategories(mediaType)
     }
 
-    fun saveTopTenEntry(mediaType: String, categoryName: String, rank: Int, title: String, subtitle: String = "") {
+    fun saveTopTenEntry(
+        mediaType: String,
+        categoryName: String,
+        rank: Int,
+        title: String,
+        subtitle: String = "",
+        shiftExistingDown: Boolean = false
+    ) {
         viewModelScope.launch {
-            repository.saveTopTenEntry(
-                TopTenEntry(
-                    mediaType = mediaType,
-                    categoryName = categoryName,
-                    rank = rank,
-                    title = title.trim(),
-                    subtitle = subtitle.trim()
-                )
+            repository.saveTopTenEntryAtRank(
+                mediaType = mediaType,
+                categoryName = categoryName,
+                rank = rank,
+                title = title,
+                subtitle = subtitle,
+                shiftExistingDown = shiftExistingDown
             )
         }
     }

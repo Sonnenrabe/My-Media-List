@@ -202,6 +202,10 @@ internal object ChineseStrings : AppStrings {
     override val pickFromEntries = "从已有条目中选择:"
     override val subtitleOptional = "补充说明（可选）"
     override val subtitlePlaceholder = "例如: 评分或游玩时长"
+    override val topTenModeEdit = "编辑"
+    override val topTenModeInsertShift = "插入并↓"
+    override val topTenShiftHint: (Int, Int) -> String = { from, to -> "将第${from}名移至第${to}名，后续条目顺延下移。" }
+    override val topTenShiftDropWarning = "原第10名将移出榜单。"
 
     override val notificationsDisabledBanner = "通知已关闭，点击开启。"
     override val enableNotificationsToast = "请开启通知权限以显示实时计时器。"

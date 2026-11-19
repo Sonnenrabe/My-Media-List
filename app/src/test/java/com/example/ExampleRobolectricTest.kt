@@ -378,4 +378,96 @@ class ExampleRobolectricTest {
         com.example.data.AutoBackupManager.setAutoBackupEnabled(context, true)
         assertTrue(com.example.data.AutoBackupManager.isAutoBackupEnabled(context))
     }
+
+    @Test
+    fun `test top ten edit replaces existing entry without duplicates and supports rank shifting`() = kotlinx.coroutines.runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val db = com.example.data.GameDatabase.getInstance(context, this)
+        val repository = com.example.data.GameRepository(db.gameDao(), db.mediaDao())
+        val cat = "ShiftTest"
+
+        repository.clearTopTenCategory("SPIELE", cat)
+
+        // Seed full Top 10 (#1..#10) plus a legacy duplicate at rank #5
+        for (r in 1..10) {
+            repository.saveTopTenEntry(
+                TopTenEntry(mediaType = "SPIELE", categoryName = cat, rank = r, title = "Game $r", subtitle = "Sub $r")
+            )
+        }
+        repository.saveTopTenEntry(
+            TopTenEntry(mediaType = "SPIELE", categoryName = cat, rank = 5, title = "Stale Duplicate", subtitle = "")
+        )
+
+        // 1) Edit rank #5 in-place -> replaces old #5 and removes duplicate
+        repository.saveTopTenEntryAtRank(
+            mediaType = "SPIELE",
+            categoryName = cat,
+            rank = 5,
+            title = "Edited Game 5",
+            subtitle = "Updated Note",
+            shiftExistingDown = false
+        )
+
+        val afterEdit = repository.getTopTenEntries("SPIELE", cat).first()
+        assertEquals(10, afterEdit.size)
+        assertEquals(1, afterEdit.count { it.rank == 5 })
+        val editedFive = afterEdit.first { it.rank == 5 }
+        assertEquals("Edited Game 5", editedFive.title)
+        assertEquals("Updated Note", editedFive.subtitle)
+        assertEquals("Game 6", afterEdit.first { it.rank == 6 }.title)
+
+        // 2) Insert new entry at rank #5 with shiftExistingDown = true
+        // Expect: #1..#4 unchanged, #5 = New Entry, #6 = Edited Game 5, #7 = Game 6, ..., #10 = Game 9 (old Game 10 dropped)
+        repository.saveTopTenEntryAtRank(
+            mediaType = "SPIELE",
+            categoryName = cat,
+            rank = 5,
+            title = "New Rank 5",
+            subtitle = "Fresh",
+            shiftExistingDown = true
+        )
+
+        val afterShift = repository.getTopTenEntries("SPIELE", cat).first()
+        assertEquals(10, afterShift.size)
+        assertEquals("Game 4", afterShift.first { it.rank == 4 }.title)
+        assertEquals("New Rank 5", afterShift.first { it.rank == 5 }.title)
+        assertEquals("Edited Game 5", afterShift.first { it.rank == 6 }.title)
+        assertEquals("Game 6", afterShift.first { it.rank == 7 }.title)
+        assertEquals("Game 7", afterShift.first { it.rank == 8 }.title)
+        assertEquals("Game 8", afterShift.first { it.rank == 9 }.title)
+        assertEquals("Game 9", afterShift.first { it.rank == 10 }.title)
+        assertTrue(afterShift.none { it.title == "Game 10" })
+
+        // 3) Gap-preserving cascade shift: #5 & #6 occupied, #7 empty, #8 occupied -> #5->#6, #6->#7, #8 untouched
+        val gapCat = "GapShiftTest"
+        repository.clearTopTenCategory("SPIELE", gapCat)
+        repository.saveTopTenEntryAtRank("SPIELE", gapCat, 5, "Five", "", false)
+        repository.saveTopTenEntryAtRank("SPIELE", gapCat, 6, "Six", "", false)
+        repository.saveTopTenEntryAtRank("SPIELE", gapCat, 8, "Eight", "", false)
+
+        repository.saveTopTenEntryAtRank("SPIELE", gapCat, 5, "Inserted Five", "", true)
+        val afterGapShift = repository.getTopTenEntries("SPIELE", gapCat).first()
+        assertEquals(4, afterGapShift.size)
+        assertEquals("Inserted Five", afterGapShift.first { it.rank == 5 }.title)
+        assertEquals("Five", afterGapShift.first { it.rank == 6 }.title)
+        assertEquals("Six", afterGapShift.first { it.rank == 7 }.title)
+        assertEquals("Eight", afterGapShift.first { it.rank == 8 }.title)
+
+        // 4) Deleting the only entry in a category preserves the category
+        val singleCat = "SingleEntryCat"
+        repository.clearTopTenCategory("SPIELE", singleCat)
+        repository.saveTopTenEntryAtRank("SPIELE", singleCat, 1, "Only Game", "", false)
+        val singleEntry = repository.getTopTenEntries("SPIELE", singleCat).first().first()
+        repository.deleteTopTenEntry(singleEntry.id)
+
+        val categoriesAfterDelete = repository.getTopTenCategories("SPIELE").first()
+        assertTrue(categoriesAfterDelete.contains(singleCat))
+        val remainingNonBlank = repository.getTopTenEntries("SPIELE", singleCat).first().filter { it.title.isNotBlank() }
+        assertTrue(remainingNonBlank.isEmpty())
+
+        // Clean up test categories
+        repository.clearTopTenCategory("SPIELE", cat)
+        repository.clearTopTenCategory("SPIELE", gapCat)
+        repository.clearTopTenCategory("SPIELE", singleCat)
+    }
 }

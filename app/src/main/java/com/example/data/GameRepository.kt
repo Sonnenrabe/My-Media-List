@@ -183,7 +183,27 @@ class GameRepository(
 
     suspend fun saveTopTenEntry(entry: TopTenEntry): Long = mediaDao?.insertTopTenEntry(entry) ?: 0L
 
-    suspend fun deleteTopTenEntry(id: Long) { mediaDao?.deleteTopTenEntryById(id) }
+    suspend fun saveTopTenEntryAtRank(
+        mediaType: String,
+        categoryName: String,
+        rank: Int,
+        title: String,
+        subtitle: String,
+        shiftExistingDown: Boolean
+    ) {
+        mediaDao?.saveTopTenEntryAtRank(
+            mediaType = mediaType,
+            categoryName = categoryName,
+            rank = rank,
+            title = title,
+            subtitle = subtitle,
+            shiftExistingDown = shiftExistingDown
+        )
+    }
+
+    suspend fun deleteTopTenEntry(id: Long) {
+        mediaDao?.deleteTopTenEntryPreservingCategory(id)
+    }
 
     suspend fun clearTopTenCategory(mediaType: String, categoryName: String) {
         mediaDao?.clearTopTenForCategory(mediaType, categoryName)

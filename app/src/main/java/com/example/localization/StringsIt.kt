@@ -202,6 +202,10 @@ internal object ItalianStrings : AppStrings {
     override val pickFromEntries = "Scegli dai tuoi titoli:"
     override val subtitleOptional = "Nota / Sottotitolo (opzionale)"
     override val subtitlePlaceholder = "es. Voto o ore"
+    override val topTenModeEdit = "Modifica"
+    override val topTenModeInsertShift = "Inserisci e ↓"
+    override val topTenShiftHint: (Int, Int) -> String = { from, to -> "Sposta #$from → #$to e fa scalare i successivi." }
+    override val topTenShiftDropWarning = "La posizione #10 uscirà dalla Top 10."
 
     override val notificationsDisabledBanner = "Notifiche disattivate. Tocca per attivare."
     override val enableNotificationsToast = "Attiva le notifiche per il timer live."

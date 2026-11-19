@@ -202,6 +202,10 @@ internal object JapaneseStrings : AppStrings {
     override val pickFromEntries = "登録済みから選択:"
     override val subtitleOptional = "補足メモ（任意）"
     override val subtitlePlaceholder = "例: 評価やプレイ時間"
+    override val topTenModeEdit = "編集"
+    override val topTenModeInsertShift = "挿入して↓"
+    override val topTenShiftHint: (Int, Int) -> String = { from, to -> "${from}位→${to}位へ繰り下げ、以降を順にずらします。" }
+    override val topTenShiftDropWarning = "10位はリストから外れます。"
 
     override val notificationsDisabledBanner = "通知が無効です。タップして有効化。"
     override val enableNotificationsToast = "ライブタイマー表示のため通知を有効にしてください。"
