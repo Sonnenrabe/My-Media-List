@@ -56,6 +56,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -325,28 +327,41 @@ fun TopTenScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(14.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
 
                             if (entry != null) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = entry.title,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            lineHeight = 18.sp,
+                                            hyphens = Hyphens.None,
+                                            lineBreak = LineBreak.Heading
+                                        ),
                                         color = TextPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        softWrap = true,
+                                        maxLines = Int.MAX_VALUE
                                     )
                                     if (entry.subtitle.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(2.dp))
                                         Text(
                                             text = entry.subtitle,
-                                            style = MaterialTheme.typography.bodySmall,
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                lineHeight = 16.sp,
+                                                hyphens = Hyphens.None,
+                                                lineBreak = LineBreak.Simple
+                                            ),
                                             color = TextSecondary,
-                                            maxLines = 1,
+                                            softWrap = true,
+                                            maxLines = 3,
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }
                                 }
+
+                                Spacer(modifier = Modifier.width(6.dp))
 
                                 IconButton(
                                     onClick = { entryToEdit = entry },
